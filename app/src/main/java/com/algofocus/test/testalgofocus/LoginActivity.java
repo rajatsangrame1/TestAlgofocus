@@ -23,19 +23,15 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
-
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
 import com.facebook.FacebookException;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
-import com.facebook.Profile;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
-import com.facebook.login.widget.LoginButton;
-
 import org.json.JSONObject;
 
 import java.security.MessageDigest;
@@ -101,7 +97,7 @@ public class LoginActivity extends AppCompatActivity {
                 } else {
                     alertBox();
 
-                    /**NOTE : Application will crash until it gets approximate GPS data
+                    /** Application will crash until it gets approximate GPS data
                      * SO I am setting a Toast message in UserActivity
                      */
                 }
@@ -109,9 +105,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         //For Generation of KeyHash (Testing Part)
-
         //generateKeyHash();
-
     }
 
     protected void getUserDetails(LoginResult loginResult) {
