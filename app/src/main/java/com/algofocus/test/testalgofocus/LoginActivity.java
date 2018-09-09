@@ -23,6 +23,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
 import com.facebook.FacebookCallback;
@@ -32,15 +33,18 @@ import com.facebook.GraphResponse;
 import com.facebook.appevents.AppEventsLogger;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
+
 import org.json.JSONObject;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.Permission;
 import java.util.Arrays;
+import java.util.Set;
 
 public class LoginActivity extends AppCompatActivity {
 
-    static final Integer LOCATION = 101;
+    private static final Integer LOCATION = 101;
     private CallbackManager callbackManager;
     private Button loginButton;
     private SharedPreferences preferences;
@@ -60,6 +64,7 @@ public class LoginActivity extends AppCompatActivity {
             return;
         }
 
+        // Runtime Permission for GPS LOCATION
         askForPermission(Manifest.permission.ACCESS_FINE_LOCATION, LOCATION);
 
         callbackManager = CallbackManager.Factory.create();
@@ -71,7 +76,31 @@ public class LoginActivity extends AppCompatActivity {
                     public void onSuccess(LoginResult loginResult) {
 
                         accessToken = AccessToken.getCurrentAccessToken();
-                        getUserDetails(loginResult);
+
+                        // Getting List of declined Permission by USER
+                        Set<String> declinedPermissions = accessToken.getDeclinedPermissions();
+                        if (declinedPermissions.contains("email")) {
+
+                            // if email permission is declined ask USER to Login Again
+                            final AlertDialog.Builder builder = new AlertDialog.Builder(LoginActivity.this);
+                            builder.setTitle("Unable to Process")
+                                    .setMessage("Please submit your Email. Do you want to login again ?")
+                                    .setPositiveButton("Login", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            LoginManager.getInstance().logInWithReadPermissions(LoginActivity.this, Arrays.asList("public_profile", "email"));
+                                            dialog.cancel();
+                                        }
+                                    })
+                                    .setNegativeButton("No", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int id) {
+                                            dialog.cancel();
+                                        }
+                                    }).show();
+                        } else {
+                            getUserDetails(loginResult);
+                        }
                     }
 
                     @Override
@@ -81,6 +110,7 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void onError(FacebookException exception) {
                     }
+
                 });
 
         loginButton = findViewById(R.id.login_button);
@@ -95,20 +125,23 @@ public class LoginActivity extends AppCompatActivity {
                 if (displayGpsStatus()) {
                     LoginManager.getInstance().logInWithReadPermissions(LoginActivity.this, Arrays.asList("public_profile", "email"));
                 } else {
+                    // Forcing user to turn on GPS
                     alertBox();
 
-                    /** Application will crash until it gets approximate GPS data
-                     * SO I am setting a Toast message in UserActivity
+                    /*
+                     * @LocationManager will throw Exception until it gets approximate GPS data.
+                     * In that case I am setting a Toast message in @UserActivity
                      */
                 }
             }
         });
 
-        //For Generation of KeyHash (Testing Part)
-        //generateKeyHash();
+        // For Generation of KeyHash (Testing Part)
+        /* generateKeyHash(); */
     }
 
     protected void getUserDetails(LoginResult loginResult) {
+
         GraphRequest request = GraphRequest.newMeRequest(
                 loginResult.getAccessToken(),
                 new GraphRequest.GraphJSONObjectCallback() {
@@ -118,6 +151,7 @@ public class LoginActivity extends AppCompatActivity {
                         System.out.println(TAG + object.toString());
                         System.out.println(TAG + response.toString());
 
+                        // Putting USER INFO in SharedPref for auto-login
                         SharedPreferences.Editor editor = getSharedPreferences("UserDetails", MODE_PRIVATE).edit();
                         editor.putString("json", object.toString());
                         editor.putBoolean("is_login", true);
@@ -127,6 +161,8 @@ public class LoginActivity extends AppCompatActivity {
                         finish();
                     }
                 });
+
+        // Requesting Facebook for Parameters Required
         Bundle parameters = new Bundle();
         parameters.putString("fields", "id,name,first_name,last_name,email,picture.width(720).height(720)");
         request.setParameters(parameters);
@@ -256,4 +292,5 @@ public class LoginActivity extends AppCompatActivity {
         // Logs 'app deactivate' App Event.
         AppEventsLogger.deactivateApp(this);
     }
+
 }

@@ -121,9 +121,11 @@
                             android:layout_below="@+id/layout_left"
                             android:layout_centerHorizontal="true"
                             android:layout_marginTop="20dp"
+                            android:drawableStart="@drawable/ic_facebook"
                             android:background="@drawable/shape_button"
-                            android:paddingLeft="30dp"
-                            android:paddingRight="30dp"
+                            android:paddingStart="10dp"
+                            android:drawablePadding="30dp"
+                            android:paddingEnd="50dp"
                             android:text="Facebook Logout"
                             android:textAllCaps="false"
                             android:textColor="#FFF" />

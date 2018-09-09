@@ -29,7 +29,6 @@ import com.squareup.picasso.Picasso;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-
 public class UserActivity extends AppCompatActivity implements LocationListener, OnMapReadyCallback {
 
     private ImageView mPicture;
@@ -48,44 +47,45 @@ public class UserActivity extends AppCompatActivity implements LocationListener,
     private GoogleMap googleMap;
     private MapFragment mapFragment;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user);
 
-        //Dummy LatLng
-        latLng = new LatLng(19.0760,72.8777);
+        // Dummy LatLng in case GPS DATA is not available
+        latLng = new LatLng(19.0760, 72.8777);
 
+        // Mapping of Elements
         mPicture = findViewById(R.id.mPicture);
         mId = findViewById(R.id.mId);
         mName = findViewById(R.id.mName);
         mEmail = findViewById(R.id.mEmail);
         logoutButton = findViewById(R.id.logout_button);
+        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
+
+        // Listeners & Callback Functions
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 LoginManager.getInstance().logOut();
                 SharedPreferences.Editor editor = getSharedPreferences("UserDetails", MODE_PRIVATE).edit();
-                editor.clear();
+                editor.clear();       // Clearing USER DATA from SharedPref on Logout Action
                 editor.apply();
 
                 startActivity(new Intent(UserActivity.this, LoginActivity.class));
                 finish();
             }
         });
+        mapFragment.getMapAsync(this);
 
         setFacebook();
         setGoogleMap();
-
-        mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
-
     }
 
     private void setFacebook() {
 
+        // Getting USER DATA from SharedPref
         SharedPreferences preferences = getSharedPreferences("UserDetails", MODE_PRIVATE);
         String jsonData = preferences.getString("json", "{}");
 
@@ -110,8 +110,8 @@ public class UserActivity extends AppCompatActivity implements LocationListener,
 
     private void setGoogleMap() {
 
+        // Wrapping data in a Try-Catch in case GPS DATA is not available
         try {
-
             locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
             if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
                 return;
@@ -126,6 +126,8 @@ public class UserActivity extends AppCompatActivity implements LocationListener,
 
     @Override
     public void onLocationChanged(Location location) {
+
+        // Fetching GPS DATA info
         latLng = new LatLng(location.getLatitude(), location.getLongitude());
         Log.i(TAG, "onLocationChanged: " + latLng.toString());
     }
@@ -145,19 +147,19 @@ public class UserActivity extends AppCompatActivity implements LocationListener,
     @Override
     public void onMapReady(GoogleMap map) {
 
+        // Setting Google Map
+        googleMap = map;
+        googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
+        try {
+            googleMap.setMyLocationEnabled(true);
+        } catch (SecurityException se) {
+            se.printStackTrace();
+        }
 
-            googleMap = map;
-            googleMap.setMapType(GoogleMap.MAP_TYPE_NORMAL);
-            try {
-                googleMap.setMyLocationEnabled(true);
-            } catch (SecurityException se) {
-                se.printStackTrace();
-            }
-
-            googleMap.getUiSettings().setZoomControlsEnabled(true);
-            Marker placeMarker = googleMap.addMarker(new MarkerOptions().position(latLng)
-                    .title("Your Place"));
-            googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
-            googleMap.animateCamera(CameraUpdateFactory.zoomTo(10), 1000, null);
+        googleMap.getUiSettings().setZoomControlsEnabled(true);
+        Marker placeMarker = googleMap.addMarker(new MarkerOptions().position(latLng) // LatLng updated in @onLocationChanged
+                .title("Your Place"));
+        googleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+        googleMap.animateCamera(CameraUpdateFactory.zoomTo(10), 1000, null);
     }
 }
